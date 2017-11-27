@@ -19,5 +19,8 @@
   "homepage": "https://github.com/yishn/LeelaSabaki",
   "bugs": {
     "url": "https://github.com/yishn/LeelaSabaki/issues"
+  },
+  "dependencies": {
+    "commander": "^2.12.1"
   }
 }
