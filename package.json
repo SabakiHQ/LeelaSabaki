@@ -2,7 +2,8 @@
   "name": "leelasabaki",
   "version": "0.1.0",
   "description": "Deep Leela integration with Sabaki",
-  "main": "index.js",
+  "bin": "leelasabaki.js",
+  "main": "leelasabaki.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/yishn/LeelaSabaki.git"
@@ -22,5 +23,11 @@
   },
   "dependencies": {
     "commander": "^2.12.1"
+  },
+  "devDependencies": {
+    "pkg": "^4.3.0-beta.1"
+  },
+  "scripts": {
+    "build": "pkg . --targets host --out-path ./bin"
   }
 }
