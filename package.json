@@ -1,0 +1,23 @@
+{
+  "name": "leelasabaki",
+  "version": "0.1.0",
+  "description": "Deep Leela integration with Sabaki",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yishn/LeelaSabaki.git"
+  },
+  "keywords": [
+    "leela",
+    "gtp",
+    "go",
+    "game",
+    "sabaki"
+  ],
+  "author": "Yichuan Shen",
+  "license": "MIT",
+  "homepage": "https://github.com/yishn/LeelaSabaki",
+  "bugs": {
+    "url": "https://github.com/yishn/LeelaSabaki/issues"
+  }
+}
