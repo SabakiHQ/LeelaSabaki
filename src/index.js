@@ -18,31 +18,65 @@ let stderrLogger = new ReadableLogger(engine.stderr)
 engine.process.on('exit', code => process.exit(code))
 engine.stderr.on('data', chunk => process.stderr.write(chunk))
 
-function getCommandName(input) {
+function parseCommand(input) {
     if (input.trim() === '') return null
 
     let inputs = input.split(/\s+/)
+    let id = parseFloat(inputs[0])
 
-    if (!isNaN(inputs[0]) && parseFloat(inputs[0]) + '' === inputs[0]) {
-        inputs.shift()
+    if (!isNaN(id) && id + '' === inputs[0]) inputs.shift()
+    else id = null
+
+    let [name, ...args] = inputs
+    return {id, name, args}
+}
+
+function log2json(log) {
+    let result = {}
+    let lines = log.split('\n')
+    let startIndex = lines.findIndex(line => line.includes('MC winrate='))
+
+    if (startIndex >= 0) {
+        lines = lines.slice(startIndex).filter(line => line.includes('->'))
+    } else {
+        lines = []
     }
 
-    if (inputs.length === 0) return null
-    return inputs[0]
+    return {
+        variations: lines.map(line => ({
+            moves: line.slice(line.indexOf('PV: ') + 4).trim().replace(/\s+/g, ' '),
+            sgf: {
+                C: [line.slice(line.indexOf('('), line.indexOf('PV: ')).trim().replace(/\s+/g, ' ')]
+            }
+        }))
+    }
 }
 
 lineReader.on('line', input => {
-    let name = getCommandName(input)
-    if (name == null) return
+    let command = parseCommand(input)
+    if (command == null) return
+
+    let {id, name, args} = command
+    if (id == null) id = ''
+
+    if (name === 'sabaki-genmovelog') {
+        let data = log2json(stderrLogger.log)
+        process.stdout.write(`=${id} #sabaki${JSON.stringify(data)}\n\n`)
+        return
+    } else if (name === 'known_command' && args[0] === 'sabaki-genmovelog') {
+        process.stdout.write(`=${id} true\n\n`)
+        return
+    }
 
     if (name === 'genmove') stderrLogger.start()
 
     engine.sendCommand(input).then(response => {
-        process.stdout.write(response)
+        process.stdout.write(response.trim())
         
-        if (name === 'genmove') {
-            fs.writeFileSync('./log.txt', stderrLogger.stop())
-        }
+        if (name === 'genmove') stderrLogger.stop()
+        if (name === 'list_commands') process.stdout.write('\nsabaki-genmovelog')
+
+        process.stdout.write('\n\n')
     })
 })
 
