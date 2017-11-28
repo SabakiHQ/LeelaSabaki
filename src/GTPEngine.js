@@ -13,7 +13,7 @@ module.exports = class GTPEngine {
         this.stdout = new LineReadable(this.process.stdout, {newline: '\n\n'})
         this.stderr = new LineReadable(this.process.stderr)
 
-        this.stdout.on('line', response => {
+        this.stdout.on('data', response => {
             if (this.commandQueue.length === 0) return
 
             let {id} = this.commandQueue.shift()

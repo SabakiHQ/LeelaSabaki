@@ -17,7 +17,7 @@ module.exports = class LineReadable extends EventEmitter {
                 let lines = this._buffer.slice(0, newlineIndex).split(newline)
 
                 for (let line of lines) {
-                    this.emit('line', line)
+                    this.emit('data', line + newline)
                 }
 
                 this._buffer = this._buffer.slice(newlineIndex + newline.length)
