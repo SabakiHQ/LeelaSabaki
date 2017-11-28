@@ -1,7 +1,7 @@
 const readline = require('readline')
 const GTPEngine = require('./GTPEngine')
 
-if (process.argv.length < 3) return
+if (process.argv.length < 3) return 
 
 let lineReader = readline.createInterface({
     input: process.stdin,
@@ -9,11 +9,11 @@ let lineReader = readline.createInterface({
     prompt: ''
 })
 
-let [, , leelaPath, ...leelaArgs] = process.argv
-let leela = new GTPEngine(leelaPath, ['--gtp', ...leelaArgs])
+let [, , path, ...args] = process.argv
+let engine = new GTPEngine(path, ['--gtp', ...args])
 
-leela.process.on('exit', code => process.exit(code))
-leela.stderr.on('line', line => process.stderr.write(`${line}\n`))
+engine.process.on('exit', code => process.exit(code))
+engine.stderr.on('line', line => process.stderr.write(`${line}\n`))
 
 function getCommandName(input) {
     let inputs = input.split(/\s+/)
@@ -30,7 +30,7 @@ lineReader.on('line', input => {
     let name = getCommandName(input)
     if (name == null) return
 
-    leela.sendCommand(input).then(response => {
+    engine.sendCommand(input).then(response => {
         process.stdout.write(`${response}\n\n`)
     })
 })
