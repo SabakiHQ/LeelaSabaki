@@ -18,19 +18,6 @@ let stderrLogger = new ReadableLogger(engine.stderr)
 engine.process.on('exit', code => process.exit(code))
 engine.stderr.on('data', chunk => process.stderr.write(chunk))
 
-function parseCommand(input) {
-    if (input.trim() === '') return null
-
-    let inputs = input.split(/\s+/)
-    let id = parseFloat(inputs[0])
-
-    if (!isNaN(id) && id + '' === inputs[0]) inputs.shift()
-    else id = null
-
-    let [name, ...args] = inputs
-    return {id, name, args}
-}
-
 function log2json(log) {
     let result = {}
     let lines = log.split('\n')
@@ -44,7 +31,7 @@ function log2json(log) {
 
     return {
         variations: lines.map(line => ({
-            moves: line.slice(line.indexOf('PV: ') + 4).trim().replace(/\s+/g, ' '),
+            moves: line.slice(line.indexOf('PV: ') + 4).trim().split(/\s+/),
             sgf: {
                 C: [line.slice(line.indexOf('('), line.indexOf('PV: ')).trim().replace(/\s+/g, ' ')]
             }
@@ -53,7 +40,7 @@ function log2json(log) {
 }
 
 lineReader.on('line', input => {
-    let command = parseCommand(input)
+    let command = engine.parseCommand(input)
     if (command == null) return
 
     let {id, name, args} = command

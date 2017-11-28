@@ -21,11 +21,24 @@ module.exports = class GTPEngine {
         })
     }
 
-    sendCommand(command) {
+    parseCommand(input) {
+        if (input.trim() === '') return null
+
+        let inputs = input.split(/\s+/)
+        let id = parseFloat(inputs[0])
+
+        if (!isNaN(id) && id + '' === inputs[0]) inputs.shift()
+        else id = null
+
+        let [name, ...args] = inputs
+        return {id, name, args}
+    }
+
+    sendCommand(input) {
         let id = this._id++
         
-        this.commandQueue.push({id, command})
-        this.process.stdin.write(`${command}\n`)
+        this.commandQueue.push({id, input})
+        this.process.stdin.write(`${input}\n`)
 
         return new Promise(resolve => {
             this._events.once(`response-${id}`, response => {
