@@ -13,7 +13,7 @@ let lineReader = readline.createInterface({
 let [, , leelaPath, ...leelaArgs] = process.argv
 let leela = spawn(leelaPath, ['--gtp', ...leelaArgs])
 
-let leelaOut = new LineReadable(leela.stdout)
+let leelaOut = new LineReadable(leela.stdout, {newline: '\n\n'})
 let leelaErr = new LineReadable(leela.stderr)
 
 leela.on('exit', code => {
@@ -21,7 +21,7 @@ leela.on('exit', code => {
 })
 
 leelaOut.on('line', line => {
-    process.stdout.write(line + '\n')
+    process.stdout.write(line + '\n\n')
 })
 
 leelaErr.on('line', line => {
