@@ -9,7 +9,7 @@ module.exports = class LineReadable extends EventEmitter {
         this.newline = newline
 
         readable.on('data', chunk => {
-            this._buffer += chunk
+            this._buffer += (chunk + '').replace(/\r/g, '')
 
             let newlineIndex = this._buffer.lastIndexOf(newline)
 
