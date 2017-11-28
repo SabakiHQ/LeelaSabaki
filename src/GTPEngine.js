@@ -21,14 +21,16 @@ module.exports = class GTPEngine {
         })
     }
 
-    sendCommand(command, callback = () => {}) {
+    sendCommand(command) {
         let id = this._id++
         
         this.commandQueue.push({id, command})
         this.process.stdin.write(`${command}\n`)
 
-        this._events.once(`response-${id}`, (...args) => {
-            setTimeout(() => callback(...args), 0)
+        return new Promise(resolve => {
+            this._events.once(`response-${id}`, response => {
+                setTimeout(() => resolve(response), 0)
+            })
         })
     }
 }
