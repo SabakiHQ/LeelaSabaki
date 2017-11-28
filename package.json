@@ -21,9 +21,7 @@
   "bugs": {
     "url": "https://github.com/yishn/LeelaSabaki/issues"
   },
-  "dependencies": {
-    "commander": "^2.12.1"
-  },
+  "dependencies": {},
   "devDependencies": {
     "pkg": "^4.3.0-beta.1"
   },
