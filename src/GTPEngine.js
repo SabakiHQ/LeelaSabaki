@@ -25,8 +25,10 @@ module.exports = class GTPEngine {
         let id = this._id++
         
         this.commandQueue.push({id, command})
+        this.process.stdin.write(`${command}\n`)
 
-        this.process.stdin.write(command + '\n')
-        this._events.once(`response-${id}`, callback)
+        this._events.once(`response-${id}`, (...args) => {
+            setTimeout(() => callback(...args), 0)
+        })
     }
 }

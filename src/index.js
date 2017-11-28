@@ -13,11 +13,13 @@ let [, , leelaPath, ...leelaArgs] = process.argv
 let leela = new GTPEngine(leelaPath, ['--gtp', ...leelaArgs])
 
 leela.process.on('exit', code => process.exit(code))
-leela.stderr.on('line', line => process.stderr.write(line + '\n'))
+leela.stderr.on('line', line => process.stderr.write(`${line}\n`))
 
 lineReader.on('line', input => {
+    if (input.trim() === '') return
+
     leela.sendCommand(input, response => {
-        process.stdout.write(response + '\n\n')
+        process.stdout.write(`${response}\n\n`)
     })
 })
 
