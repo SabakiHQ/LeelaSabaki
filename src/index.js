@@ -1,6 +1,5 @@
-const {spawn} = require('child_process')
 const readline = require('readline')
-const LineReadable = require('./LineReadable')
+const GTPEngine = require('./GTPEngine')
 
 if (process.argv.length < 3) return
 
@@ -11,25 +10,15 @@ let lineReader = readline.createInterface({
 })
 
 let [, , leelaPath, ...leelaArgs] = process.argv
-let leela = spawn(leelaPath, ['--gtp', ...leelaArgs])
+let leela = new GTPEngine(leelaPath, ['--gtp', ...leelaArgs])
 
-let leelaOut = new LineReadable(leela.stdout, {newline: '\n\n'})
-let leelaErr = new LineReadable(leela.stderr)
-
-leela.on('exit', code => {
-    process.exit(code)
-})
-
-leelaOut.on('line', line => {
-    process.stdout.write(line + '\n\n')
-})
-
-leelaErr.on('line', line => {
-    process.stderr.write(line + '\n')
-})
+leela.process.on('exit', code => process.exit(code))
+leela.stderr.on('line', line => process.stderr.write(line + '\n'))
 
 lineReader.on('line', input => {
-    leela.stdin.write(input + '\n')
+    leela.sendCommand(input, response => {
+        process.stdout.write(response + '\n\n')
+    })
 })
 
 lineReader.prompt()
