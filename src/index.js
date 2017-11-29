@@ -1,5 +1,6 @@
 const fs = require('fs')
 const readline = require('readline')
+const {coord2point} = require('./sgf')
 const GTPEngine = require('./GTPEngine')
 const ReadableLogger = require('./ReadableLogger')
 
@@ -15,6 +16,11 @@ let [, , path, ...args] = process.argv
 let engine = new GTPEngine(path, ['--gtp', ...args])
 let stderrLogger = new ReadableLogger(engine.stderr)
 
+let state = {
+    size: 19,
+    genmoveColor: 'B'
+}
+
 engine.process.on('exit', code => process.exit(code))
 engine.stderr.on('data', chunk => process.stderr.write(chunk))
 
@@ -29,13 +35,21 @@ function log2json(log) {
         lines = []
     }
 
+    let colors = [state.genmoveColor, state.genmoveColor === 'B' ? 'W' : 'B']
+
     return {
-        variations: lines.map(line => ({
-            moves: line.slice(line.indexOf('PV: ') + 4).trim().split(/\s+/),
-            sgf: {
-                C: [line.slice(line.indexOf('('), line.indexOf('PV: ')).trim().replace(/\s+/g, ' ')]
-            }
-        }))
+        variations: lines.map(line =>
+            `(${
+                line.slice(line.indexOf('PV: ') + 4).trim().split(/\s+/)
+                .map((x, i) => `${colors[i % 2]}[${coord2point(x, state.size)}]`)
+                .join(';')
+            })C[${
+                line.slice(line.indexOf('('), line.indexOf('PV: ')).trim()
+                .replace(/\s+/g, ' ').slice(1, -1).split(') (')
+                .map(x => `- **${x[0]}** ${x.slice(x.indexOf(':') + 2)}`)
+                .join('\n')
+            }];`
+        ).join('')
     }
 }
 
@@ -60,8 +74,14 @@ lineReader.on('line', input => {
     engine.sendCommand(input).then(response => {
         process.stdout.write(response.trim())
         
-        if (name === 'genmove') stderrLogger.stop()
-        if (name === 'list_commands') process.stdout.write('\nsabaki-genmovelog')
+        if (name === 'genmove') {
+            stderrLogger.stop()
+            if (response[0] === '=') state.genmoveColor = args[0][0].toUpperCase()
+        } else if (name === 'list_commands') {
+            process.stdout.write('\nsabaki-genmovelog')
+        } else if (name === 'boardsize') {
+            if (response[0] === '=') state.size = +args[0]
+        }
 
         process.stdout.write('\n\n')
     })
