@@ -26,6 +26,7 @@
     "pkg": "^4.3.0-beta.1"
   },
   "scripts": {
-    "build": "pkg . --targets host --out-path ./bin"
+    "build": "pkg . --targets host --out-path ./bin",
+    "build:all": "pkg . --targets node8-windows-x64,node8-linux-x64,node8-macos-x64 --out-path ./bin"
   }
 }

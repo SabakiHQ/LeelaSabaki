@@ -1,10 +1,15 @@
+const pkg = require('../package')
 const fs = require('fs')
 const readline = require('readline')
 const {coord2point} = require('./sgf')
 const GTPEngine = require('./GTPEngine')
 const ReadableLogger = require('./ReadableLogger')
 
-if (process.argv.length < 3) return
+if (process.argv.length < 3) return console.log(`
+    ${pkg.name} v${pkg.version}
+
+    USAGE: ${pkg.name} <path-to-leela> [leela-arguments...]
+`)
 
 let lineReader = readline.createInterface({
     input: process.stdin,
