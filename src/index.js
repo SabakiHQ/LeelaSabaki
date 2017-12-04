@@ -39,16 +39,18 @@ function log2json(log) {
 
     return {
         variations: lines.map(line =>
-            `(;${
+            `(;C[${
+                `- \`${line.slice(line.indexOf('->') + 2, line.indexOf('(')).trim()}\` visits\n`
+
+                + line.slice(line.indexOf('('), line.indexOf('PV: ')).trim()
+                .replace(/\s+/g, ' ').slice(1, -1).split(') (')
+                .map(x => `  - **${x[0]}** \`${x.slice(x.indexOf(':') + 2)}\``)
+                .join('\n')
+            }]${
                 line.slice(line.indexOf('PV: ') + 4).trim().split(/\s+/)
                 .map((x, i) => `${colors[i % 2]}[${coord2point(x, state.size)}]`)
                 .join(';')
-            }C[${
-                line.slice(line.indexOf('('), line.indexOf('PV: ')).trim()
-                .replace(/\s+/g, ' ').slice(1, -1).split(') (')
-                .map(x => `- **${x[0]}** ${x.slice(x.indexOf(':') + 2)}`)
-                .join('\n')
-            }])`
+            })`
         ).join('')
     }
 }
