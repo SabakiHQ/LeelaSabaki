@@ -2,6 +2,8 @@ const gtpAlpha = 'ABCDEFGHJKLMNOPQRSTUVWXYZ'
 const sgfAlpha = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 exports.coord2point = function coord2point(coord, size) {
+    if (coord === 'pass') return ''
+
     let x = gtpAlpha.indexOf(coord[0].toUpperCase())
     let y = size - +coord.substr(1)
 
