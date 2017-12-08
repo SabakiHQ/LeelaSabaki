@@ -30,38 +30,37 @@ engine.process.on('exit', code => process.exit(code))
 engine.stderr.on('data', chunk => process.stderr.write(chunk))
 
 function log2json(log) {
-    let result = {}
     let lines = log.split('\n')
     let startIndex = lines.findIndex(line => line.includes('MC winrate=') || line.includes('NN eval='))
-
-    if (startIndex >= 0) {
-        lines = lines.slice(startIndex).filter(line => line.includes('->'))
-    } else {
-        lines = []
-    }
+    if (startIndex < 0) return {variations: []}
 
     let colors = [state.genmoveColor, state.genmoveColor === 'B' ? 'W' : 'B']
-    let variations = lines.map(line => ({
-        visits: +line.slice(line.indexOf('->') + 2, line.indexOf('(')).trim(),
-        stats: line.slice(line.indexOf('('), line.indexOf('PV: ')).trim()
-            .replace(/\s+/g, ' ').slice(1, -1).split(') (')
-            .reduce((acc, x) => Object.assign(acc, {[x[0]]: x.slice(x.indexOf(':') + 2)}), {}),
-        variation: line.slice(line.indexOf('PV: ') + 4).trim().split(/\s+/)
-    })).filter(({visits, variation}) => visits >= 100 && variation.length >= 4)
 
     return {
-        variations: variations.map(({visits, stats, variation}) =>
-            `(;C[${
-                [
-                    `- \`${visits}\` visits`,
-                    Object.keys(stats).map(key => `  - **${key}** \`${stats[key]}\``).join('\n')
-                ].join('\n')
-            }]${
-                variation
-                .map((x, i) => `${colors[i % 2]}[${coord2point(x, state.size)}]`)
-                .join(';')
-            })`
-        ).join('')
+        variations: lines
+            .slice(startIndex)
+            .filter(line => line.includes('->'))
+            .map(line => ({
+                visits: +line.slice(line.indexOf('->') + 2, line.indexOf('(')).trim(),
+                stats: line.slice(line.indexOf('('), line.indexOf('PV: ')).trim()
+                    .replace(/\s+/g, ' ').slice(1, -1).split(') (')
+                    .reduce((acc, x) => Object.assign(acc, {[x[0]]: x.slice(x.indexOf(':') + 2)}), {}),
+                variation: line.slice(line.indexOf('PV: ') + 4).trim().split(/\s+/)
+            }))
+            .filter(({visits, variation}) => visits >= 100 && variation.length >= 4)
+            .map(({visits, stats, variation}) =>
+                `(;C[${
+                    [
+                        `- \`${visits}\` visits`,
+                        Object.keys(stats).map(key => `  - **${key}** \`${stats[key]}\``).join('\n')
+                    ].join('\n')
+                }]${
+                    variation
+                    .map((x, i) => `${colors[i % 2]}[${coord2point(x, state.size)}]`)
+                    .join(';')
+                })`
+            )
+            .join('')
     }
 }
 
