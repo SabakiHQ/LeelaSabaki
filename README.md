@@ -4,11 +4,15 @@
 
 ![Screenshot](./screenshot.png)
 
+## Features
+
+- Adds other variations considered by Leela (Zero) to the game tree in Sabaki, along with winning statistics
+
 ## Installation
 
-- Make sure you have [Sabaki](http://sabaki.yichuanshen.de) v0.32.0 or higher installed.
 - Make sure you have the engine only version of [Leela](https://www.sjeng.org/leela.html) or [Leela Zero](https://github.com/gcp/leela-zero).
-- [Download LeelaSabaki](https://github.com/yishn/LeelaSabaki/releases), or build it yourself, for your platform and have the executable file saved somewhere safely. 
+- Make sure you have [Sabaki](http://sabaki.yichuanshen.de) v0.32.0 or higher installed.
+- [Download LeelaSabaki](https://github.com/yishn/LeelaSabaki/releases), or [build it yourself](#building). Make sure you have permission to execute the files.
 - Open Sabaki and open the 'Preferences' drawer by pressing <kbd>Ctrl+,</kbd> or <kbd>Cmd+,</kbd>.
 - Click on the 'Engines' path and add a new engine with the following settings:
 	- **Path:** Your path to LeelaSabaki
