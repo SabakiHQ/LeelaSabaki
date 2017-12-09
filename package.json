@@ -1,5 +1,6 @@
 {
   "name": "leelasabaki",
+  "productName": "LeelaSabaki",
   "version": "0.1.0",
   "description": "Deep Leela integration with Sabaki",
   "bin": "./src/index.js",

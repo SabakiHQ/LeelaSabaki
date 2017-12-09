@@ -6,7 +6,7 @@ const GTPEngine = require('./GTPEngine')
 const ReadableLogger = require('./ReadableLogger')
 
 if (process.argv.length < 3) return console.log(`
-    ${pkg.name} v${pkg.version}
+    ${pkg.productName} v${pkg.version}
 
     USAGE: ${pkg.name} <path-to-leela> [leela-arguments...]
 `)
