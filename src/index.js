@@ -64,7 +64,7 @@ function log2json(log) {
     }
 }
 
-lineReader.on('line', input => {
+lineReader.on('line', async input => {
     let command = engine.parseCommand(input)
     if (command == null) return
 
@@ -82,20 +82,20 @@ lineReader.on('line', input => {
 
     if (name === 'genmove') stderrLogger.start()
 
-    engine.sendCommand(input).then(response => {
-        process.stdout.write(response.trim())
-        
-        if (name === 'genmove') {
-            stderrLogger.stop()
-            if (response[0] === '=') state.genmoveColor = args[0][0].toUpperCase()
-        } else if (name === 'list_commands') {
-            process.stdout.write('\nsabaki-genmovelog')
-        } else if (name === 'boardsize') {
-            if (response[0] === '=') state.size = +args[0]
-        }
+    let response = await engine.sendCommand(input)
 
-        process.stdout.write('\n\n')
-    })
+    process.stdout.write(response.trim())
+    
+    if (name === 'genmove') {
+        stderrLogger.stop()
+        if (response[0] === '=') state.genmoveColor = args[0][0].toUpperCase()
+    } else if (name === 'list_commands') {
+        process.stdout.write('\nsabaki-genmovelog')
+    } else if (name === 'boardsize') {
+        if (response[0] === '=') state.size = +args[0]
+    }
+
+    process.stdout.write('\n\n')
 })
 
 lineReader.prompt()
