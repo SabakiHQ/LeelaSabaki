@@ -17,7 +17,7 @@ if (leelaArgIndex < 0 || args.includes('--help')) return console.log(`
     OPTIONS:
         --flat
             Instead of appending variations as multiple moves, we will append one
-            node per variations with the final board arrangement and move numbers.
+            node per variation with the final board arrangement and move numbers.
 
         --help
             Shows this help message.

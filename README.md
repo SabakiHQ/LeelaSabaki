@@ -30,7 +30,7 @@ $ leelasabaki [--flat] [--help] <path-to-leela> [leela-arguments...]
 
 - #### `--flat`
 
-  Instead of appending variations as multiple moves, we will append one node per variations with the final board arrangement and move numbers.
+  Instead of appending variations as multiple moves, we will append one node per variation with the final board arrangement and move numbers.
 
 - #### `--help`
 
