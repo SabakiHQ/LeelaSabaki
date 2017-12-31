@@ -16,7 +16,17 @@
 - Open Sabaki and open the 'Preferences' drawer by pressing <kbd>Ctrl+,</kbd> or <kbd>Cmd+,</kbd>.
 - Click on the 'Engines' path and add a new engine with the following settings:
 	- **Path:** Your path to LeelaSabaki
-	- **Arguments:** Your path to Leela (Zero). Additional command line arguments to Leela can also be appended here. Leela will be called with the `--gtp` option automatically. If you're using Leela Zero, make sure to configure it properly.
+	- **Arguments:** LeelaSabaki options followed by your path to Leela (Zero). Additional command line arguments to Leela can also be appended. Leela will be called with the `--gtp` option automatically. If you're using Leela Zero, make sure to configure it properly.
+
+## LeelaSabaki Options
+
+- ### `--flat`
+
+  Instead of appending variations as multiple moves, we will append one node per variations with the final board arrangement and move numbers.
+
+- ### `--help`
+
+  Displays help message.
 
 ## Building
 

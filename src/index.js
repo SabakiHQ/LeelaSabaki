@@ -5,10 +5,22 @@ const {coord2point} = require('./sgf')
 const GTPEngine = require('./GTPEngine')
 const ReadableLogger = require('./ReadableLogger')
 
-if (process.argv.length < 3) return console.log(`
+let leelaArgIndex = process.argv.findIndex((x, i) => i >= 2 && x.indexOf('-') !== 0)
+let args = process.argv.slice(2, leelaArgIndex)
+
+if (leelaArgIndex < 0 || args.includes('--help')) return console.log(`
     ${pkg.productName} v${pkg.version}
 
-    USAGE: ${pkg.name} <path-to-leela> [leela-arguments...]
+    USAGE:
+        ${pkg.name} [--flat] [--help] <path-to-leela> [leela-arguments...]
+
+    OPTIONS:
+        --flat
+            Instead of appending variations as multiple moves, we will append one
+            node per variations with the final board arrangement and move numbers.
+
+        --help
+            Shows this help message.
 `)
 
 let lineReader = readline.createInterface({
@@ -17,8 +29,8 @@ let lineReader = readline.createInterface({
     prompt: ''
 })
 
-let [, , path, ...args] = process.argv
-let engine = new GTPEngine(path, ['--gtp', ...args])
+let leelaArgv = [...process.argv.slice(leelaArgIndex), '--gtp']
+let engine = new GTPEngine(...leelaArgv)
 let stderrLogger = new ReadableLogger(engine.stderr)
 
 let state = {
@@ -55,7 +67,23 @@ function log2json(log) {
                         Object.keys(stats).map(key => `  - **${key}** \`${stats[key]}\``).join('\n')
                     ].join('\n')
                 }]${
-                    variation
+                    args.includes('--flat')
+
+                    ? variation.reduce(([AB, AW, LB], x, i) => {
+                        let list = colors[i % 2] === 'B' ? AB : AW
+                        let point = coord2point(x, state.size)
+
+                        if (point !== '') {
+                            list.push(point)
+                            LB.push(`${point}:${i}`)
+                        }
+
+                        return [AB, AW, LB]
+                    }, [[], [], []]).map((list, i) => 
+                        `${['AB', 'AW', 'LB'][i]}[${list.join('][')}]`
+                    ).join('')
+
+                    : variation
                     .map((x, i) => `${colors[i % 2]}[${coord2point(x, state.size)}]`)
                     .join(';')
                 })`

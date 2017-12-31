@@ -3,7 +3,7 @@ const EventEmitter = require('events')
 const LineReadable = require('./LineReadable')
 
 module.exports = class GTPEngine {
-    constructor(path, args) {
+    constructor(path, ...args) {
         this._id = 0
         this._events = new EventEmitter()
 
