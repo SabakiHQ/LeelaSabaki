@@ -16,7 +16,7 @@
 - Open Sabaki and open the 'Preferences' drawer by pressing <kbd>Ctrl+,</kbd> or <kbd>Cmd+,</kbd>.
 - Click on the 'Engines' path and add a new engine with the following settings:
 	- **Path:** Your path to LeelaSabaki
-	- **Arguments:** LeelaSabaki arguments, followed by your path to Leela (Zero), followed by additional command line arguments to Leela. Leela will be called with the `--gtp` option automatically. If you're using Leela Zero, make sure to configure it properly.
+	- **Arguments:** [LeelaSabaki options](#options), followed by your path to Leela (Zero), followed by additional command line arguments to Leela. Leela will be called with the `--gtp` option automatically. If you're using Leela Zero, make sure to configure it properly.
 
 ## CLI Manual
 
