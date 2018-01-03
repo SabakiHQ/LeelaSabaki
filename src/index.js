@@ -75,11 +75,11 @@ function log2json(log) {
 
                         if (point !== '') {
                             list.push(point)
-                            LB.push(`${point}:${i}`)
+                            LB.push(`${point}:${i + 1}`)
                         }
 
                         return [AB, AW, LB]
-                    }, [[], [], []]).map((list, i) => 
+                    }, [[], [], []]).map((list, i) =>
                         `${['AB', 'AW', 'LB'][i]}[${list.join('][')}]`
                     ).join('')
 
@@ -113,7 +113,7 @@ lineReader.on('line', async input => {
     let response = await engine.sendCommand(input)
 
     process.stdout.write(response.trim())
-    
+
     if (name === 'genmove') {
         stderrLogger.stop()
         if (response[0] === '=') state.genmoveColor = args[0][0].toUpperCase()
