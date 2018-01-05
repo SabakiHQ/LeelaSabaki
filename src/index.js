@@ -43,14 +43,25 @@ engine.stderr.on('data', chunk => process.stderr.write(chunk))
 
 function log2json(log) {
     let lines = log.split('\n')
-    let startIndex = lines.findIndex(line => line.includes('MC winrate=') || line.includes('NN eval='))
-    if (startIndex < 0) return {variations: []}
+
+    let variationsStartIndex = lines.findIndex(line => line.includes('MC winrate=') || line.includes('NN eval='))
+    if (variationsStartIndex < 0) variationsStartIndex = lines.length
+
+    let heatmapStartIndex = lines.findIndex(line => line.match(/^\s+(\d+\s+)+$/) != null)
+    if (heatmapStartIndex < 0) heatmapStartIndex = lines.length
 
     let colors = [state.genmoveColor, state.genmoveColor === 'B' ? 'W' : 'B']
-
+    
     return {
+        heatmap: (([max, data]) => data.map(x => x.map(y => Math.floor(y * 9.9 / max))))(
+            (data => [Math.max(...data.map(x => Math.max(...x))), data])
+            (lines
+                .slice(heatmapStartIndex, heatmapStartIndex + state.size)
+                .map(line => line.trim().split(/\s+/).map(x => +x)))
+        ),
+
         variations: lines
-            .slice(startIndex)
+            .slice(variationsStartIndex)
             .filter(line => line.includes('->'))
             .map(line => ({
                 visits: +line.slice(line.indexOf('->') + 2, line.indexOf('(')).trim(),
@@ -100,8 +111,33 @@ lineReader.on('line', async input => {
     if (id == null) id = ''
 
     if (name === 'sabaki-genmovelog') {
-        let data = log2json(stderrLogger.log)
+        let {log} = stderrLogger
+
+        stderrLogger.start()
+        
+        await new Promise(resolve => {
+            let counter = state.size
+            let dataHandler = chunk => {
+                if (chunk.match(/^\s+(\d+\s+)+$/) != null) {
+                    counter--
+                }
+
+                if (counter === 0) {
+                    engine.stderr.removeListener('data', dataHandler)
+                    resolve()
+                }
+            }
+
+            engine.stderr.on('data', dataHandler)
+            engine.sendCommand('heatmap')
+        })
+        
+        stderrLogger.stop()
+        log += stderrLogger.log
+
+        let data = log2json(log)
         process.stdout.write(`=${id} #sabaki${JSON.stringify(data)}\n\n`)
+        
         return
     } else if (name === 'known_command' && args[0] === 'sabaki-genmovelog') {
         process.stdout.write(`=${id} true\n\n`)
