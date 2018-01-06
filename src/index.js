@@ -6,9 +6,9 @@ const GTPEngine = require('./GTPEngine')
 const ReadableLogger = require('./ReadableLogger')
 
 let leelaArgIndex = process.argv.findIndex((x, i) => i >= 2 && x.indexOf('-') !== 0)
-let args = process.argv.slice(2, leelaArgIndex)
+let globalArgs = process.argv.slice(2, leelaArgIndex)
 
-if (leelaArgIndex < 0 || args.includes('--help')) return console.log(`
+if (leelaArgIndex < 0 || globalArgs.includes('--help')) return console.log(`
     ${pkg.productName} v${pkg.version}
 
     USAGE:
@@ -41,80 +41,93 @@ let state = {
 engine.process.on('exit', code => process.exit(code))
 engine.stderr.on('data', chunk => process.stderr.write(chunk))
 
-function log2json(log) {
+function log2variations(log) {
     let lines = log.split('\n')
 
-    let variationsStartIndex = lines.findIndex(line => line.includes('MC winrate=') || line.includes('NN eval='))
-    if (variationsStartIndex < 0) variationsStartIndex = lines.length
-
-    let heatmapStartIndex = lines.findIndex(line => line.match(/^\s+(\d+\s+)+$/) != null)
-    if (heatmapStartIndex < 0) heatmapStartIndex = lines.length
+    let startIndex = lines.findIndex(line => line.includes('MC winrate=') || line.includes('NN eval='))
+    if (startIndex < 0) startIndex = lines.length
 
     let colors = [state.genmoveColor, state.genmoveColor === 'B' ? 'W' : 'B']
     
-    return {
-        heatmap: (([max, data]) => data.map(x => x.map(y => Math.floor(y * 9.9 / max))))(
-            (data => [Math.max(...data.map(x => Math.max(...x))), data])
-            (lines
-                .slice(heatmapStartIndex, heatmapStartIndex + state.size)
-                .map(line => line.trim().split(/\s+/).map(x => +x)))
-        ),
+    return lines
+        .slice(startIndex)
+        .filter(line => line.includes('->'))
+        .map(line => ({
+            visits: +line.slice(line.indexOf('->') + 2, line.indexOf('(')).trim(),
+            stats: line.slice(line.indexOf('('), line.indexOf('PV: ')).trim()
+                .replace(/\s+/g, ' ').slice(1, -1).split(') (')
+                .reduce((acc, x) => Object.assign(acc, {[x[0]]: x.slice(x.indexOf(':') + 2)}), {}),
+            variation: line.slice(line.indexOf('PV: ') + 4).trim().split(/\s+/)
+        }))
+        .filter(({visits, variation}) => variation.length >= 4)
+        .map(({visits, stats, variation}) =>
+            `(;C[${
+                [
+                    `- \`${visits}\` visits`,
+                    Object.keys(stats).map(key => `  - **${key}** \`${stats[key]}\``).join('\n')
+                ].join('\n')
+            }]${
+                globalArgs.includes('--flat')
 
-        variations: lines
-            .slice(variationsStartIndex)
-            .filter(line => line.includes('->'))
-            .map(line => ({
-                visits: +line.slice(line.indexOf('->') + 2, line.indexOf('(')).trim(),
-                stats: line.slice(line.indexOf('('), line.indexOf('PV: ')).trim()
-                    .replace(/\s+/g, ' ').slice(1, -1).split(') (')
-                    .reduce((acc, x) => Object.assign(acc, {[x[0]]: x.slice(x.indexOf(':') + 2)}), {}),
-                variation: line.slice(line.indexOf('PV: ') + 4).trim().split(/\s+/)
-            }))
-            .filter(({visits, variation}) => variation.length >= 4)
-            .map(({visits, stats, variation}) =>
-                `(;C[${
-                    [
-                        `- \`${visits}\` visits`,
-                        Object.keys(stats).map(key => `  - **${key}** \`${stats[key]}\``).join('\n')
-                    ].join('\n')
-                }]${
-                    args.includes('--flat')
+                ? variation.reduce(([AB, AW, LB], x, i) => {
+                    let list = colors[i % 2] === 'B' ? AB : AW
+                    let point = coord2point(x, state.size)
 
-                    ? variation.reduce(([AB, AW, LB], x, i) => {
-                        let list = colors[i % 2] === 'B' ? AB : AW
-                        let point = coord2point(x, state.size)
+                    if (point !== '') {
+                        list.push(point)
+                        LB.push(`${point}:${i + 1}`)
+                    }
 
-                        if (point !== '') {
-                            list.push(point)
-                            LB.push(`${point}:${i + 1}`)
-                        }
+                    return [AB, AW, LB]
+                }, [[], [], []]).map((list, i) =>
+                    `${['AB', 'AW', 'LB'][i]}[${list.join('][')}]`
+                ).join('')
 
-                        return [AB, AW, LB]
-                    }, [[], [], []]).map((list, i) =>
-                        `${['AB', 'AW', 'LB'][i]}[${list.join('][')}]`
-                    ).join('')
-
-                    : variation
-                    .map((x, i) => `${colors[i % 2]}[${coord2point(x, state.size)}]`)
-                    .join(';')
-                })`
-            )
-            .join('')
-    }
+                : variation
+                .map((x, i) => `${colors[i % 2]}[${coord2point(x, state.size)}]`)
+                .join(';')
+            })`
+        )
+        .join('')
 }
 
-lineReader.on('line', async input => {
+function log2heatmap(log) {
+    let lines = log.split('\n')
+
+    let startIndex = lines.findIndex(line => line.match(/^\s+(\d+\s+)+$/) != null)
+    if (startIndex < 0) startIndex = lines.length
+
+    let data = lines.slice(startIndex, startIndex + state.size)
+        .map(line => line.trim().split(/\s+/).map(x => +x))
+    let max = Math.max(...data.map(x => Math.max(...x)))
+
+    return data.map(x => x.map(y => Math.floor(y * 9.9 / max)))
+}
+
+async function handleInput(input) {
     let command = engine.parseCommand(input)
     if (command == null) return
 
     let {id, name, args} = command
     if (id == null) id = ''
 
-    if (name === 'sabaki-genmovelog') {
-        let {log} = stderrLogger
+    if (['genmove', 'heatmap'].includes(name)) stderrLogger.start()
 
-        stderrLogger.start()
-        
+    if (name === 'sabaki-genmovelog') {
+        let variations = log2variations(stderrLogger.log)
+        let json = {variations}
+
+        if (globalArgs.includes('--heatmap')) {
+            let result = await handleInput('heatmap')
+            let {heatmap} = JSON.parse(result.match(/#sabaki(.*)/)[1])
+
+            json.heatmap = heatmap
+        }
+
+        return `=${id} #sabaki${JSON.stringify(json)}\n\n`        
+    } else if (name === 'known_command' && args[0] === 'sabaki-genmovelog') {
+        return `=${id} true\n\n`
+    } else if (name === 'heatmap') {
         await new Promise(resolve => {
             let counter = state.size
             let dataHandler = chunk => {
@@ -131,35 +144,28 @@ lineReader.on('line', async input => {
             engine.stderr.on('data', dataHandler)
             engine.sendCommand('heatmap')
         })
-        
-        stderrLogger.stop()
-        log += stderrLogger.log
 
-        let data = log2json(log)
-        process.stdout.write(`=${id} #sabaki${JSON.stringify(data)}\n\n`)
-        
-        return
-    } else if (name === 'known_command' && args[0] === 'sabaki-genmovelog') {
-        process.stdout.write(`=${id} true\n\n`)
-        return
+        let heatmap = log2heatmap(stderrLogger.log)
+        return `=${id} #sabaki${JSON.stringify({heatmap})}\n\n`
     }
 
-    if (name === 'genmove') stderrLogger.start()
-
     let response = await engine.sendCommand(input)
-
-    process.stdout.write(response.trim())
+    let result = response.trim()
 
     if (name === 'genmove') {
         stderrLogger.stop()
         if (response[0] === '=') state.genmoveColor = args[0][0].toUpperCase()
     } else if (name === 'list_commands') {
-        process.stdout.write('\nsabaki-genmovelog')
+        result += '\nsabaki-genmovelog'
     } else if (name === 'boardsize') {
         if (response[0] === '=') state.size = +args[0]
     }
 
-    process.stdout.write('\n\n')
+    return result + '\n\n'
+}
+
+lineReader.on('line', async input => {
+    process.stdout.write(await handleInput(input))
 })
 
 lineReader.prompt()
