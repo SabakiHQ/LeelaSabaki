@@ -94,7 +94,7 @@ function log2variations(log) {
 function log2heatmap(log) {
     let lines = log.split('\n')
 
-    let startIndex = lines.findIndex(line => line.match(/^\s+(\d+\s+)+$/) != null)
+    let startIndex = lines.findIndex(line => line.match(/^\s*(\d+\s+)+$/) != null)
     if (startIndex < 0) startIndex = lines.length
 
     let data = lines.slice(startIndex, startIndex + state.size)
@@ -106,7 +106,7 @@ function log2heatmap(log) {
 
 async function handleInput(input) {
     let command = engine.parseCommand(input)
-    if (command == null) return
+    if (command == null) return `? invalid command`
 
     let {id, name, args} = command
     if (id == null) id = ''
@@ -128,22 +128,24 @@ async function handleInput(input) {
     } else if (name === 'known_command' && args[0] === 'sabaki-genmovelog') {
         return `=${id} true\n\n`
     } else if (name === 'heatmap') {
-        await new Promise(resolve => {
-            let counter = state.size
-            let dataHandler = chunk => {
-                if (chunk.match(/^\s+(\d+\s+)+$/) != null) {
-                    counter--
+        await Promise.all([
+            new Promise(resolve => {
+                let counter = state.size
+                let dataHandler = chunk => {
+                    if (chunk.match(/^\s*(\d+\s+)+$/) != null) {
+                        counter--
+                    }
+
+                    if (counter === 0) {
+                        engine.stderr.removeListener('data', dataHandler)
+                        resolve()
+                    }
                 }
 
-                if (counter === 0) {
-                    engine.stderr.removeListener('data', dataHandler)
-                    resolve()
-                }
-            }
-
-            engine.stderr.on('data', dataHandler)
+                engine.stderr.on('data', dataHandler)
+            }),
             engine.sendCommand('heatmap')
-        })
+        ])
 
         let heatmap = log2heatmap(stderrLogger.log)
         return `=${id} #sabaki${JSON.stringify({heatmap})}\n\n`
