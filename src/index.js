@@ -70,7 +70,7 @@ function log2json(log) {
                     .reduce((acc, x) => Object.assign(acc, {[x[0]]: x.slice(x.indexOf(':') + 2)}), {}),
                 variation: line.slice(line.indexOf('PV: ') + 4).trim().split(/\s+/)
             }))
-            .filter(({visits, variation}) => visits >= 100 && variation.length >= 4)
+            .filter(({visits, variation}) => variation.length >= 4)
             .map(({visits, stats, variation}) =>
                 `(;C[${
                     [
