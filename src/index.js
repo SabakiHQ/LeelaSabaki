@@ -19,6 +19,9 @@ if (leelaArgIndex < 0 || globalArgs.includes('--help')) return console.log(`
             Instead of appending variations as multiple moves, we will append one
             node per variation with the final board arrangement and move numbers.
 
+        --heatmap
+            Visualizes network probabilities as a heatmap after each generated move.
+
         --help
             Shows this help message.
 `)
