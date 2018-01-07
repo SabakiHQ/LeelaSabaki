@@ -6,12 +6,13 @@
 
 ## Features
 
-- Adds other variations considered by Leela (Zero) to the game tree in Sabaki, along with winning statistics
+- Shows heatmap of network probabilities
+- Adds considered variations to the game tree in Sabaki, along with winning statistics
 
 ## Installation
 
 - Make sure you have the engine only version of [Leela](https://www.sjeng.org/leela.html) or [Leela Zero](https://github.com/gcp/leela-zero).
-- Make sure you have [Sabaki v0.32.2](https://github.com/yishn/Sabaki/releases/tag/v0.32.2) installed.
+- Make sure you have [Sabaki v0.33.0](https://github.com/yishn/Sabaki/releases/tag/v0.33.0) installed.
 - [Download LeelaSabaki](https://github.com/yishn/LeelaSabaki/releases), or [build it yourself](#building). Make sure you have permission to execute the files.
 - Open Sabaki and open the 'Preferences' drawer by pressing <kbd>Ctrl/Cmd</kbd>+<kbd>,</kbd>.
 - Click on the 'Engines' tab and add a new engine with the following settings:
