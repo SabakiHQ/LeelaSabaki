@@ -12,12 +12,15 @@ if (leelaArgIndex < 0 || globalArgs.includes('--help')) return console.log(`
     ${pkg.productName} v${pkg.version}
 
     USAGE:
-        ${pkg.name} [--flat] [--help] <path-to-leela> [leela-arguments...]
+        ${pkg.name} [--flat] [--heatmap] [--help] <path-to-leela> [leela-arguments...]
 
     OPTIONS:
         --flat
             Instead of appending variations as multiple moves, we will append one
             node per variation with the final board arrangement and move numbers.
+
+        --heatmap
+            Visualizes network probabilities as a heatmap after each generated move.
 
         --help
             Shows this help message.
@@ -29,8 +32,9 @@ let lineReader = readline.createInterface({
     prompt: ''
 })
 
-let leelaArgv = [...process.argv.slice(leelaArgIndex), '--gtp']
-let engine = new GTPEngine(...leelaArgv)
+let leelaArgs = [...process.argv.slice(leelaArgIndex), '--gtp']
+let engine = new GTPEngine(...leelaArgs)
+let enableStderrRelay = true
 let stderrLogger = new ReadableLogger(engine.stderr)
 
 let state = {
@@ -39,7 +43,7 @@ let state = {
 }
 
 engine.process.on('exit', code => process.exit(code))
-engine.stderr.on('data', chunk => process.stderr.write(chunk))
+engine.stderr.on('data', chunk => enableStderrRelay && process.stderr.write(chunk))
 
 function log2variations(log) {
     let lines = log.split('\n')
@@ -118,9 +122,11 @@ async function handleInput(input) {
         let json = {variations}
 
         if (globalArgs.includes('--heatmap')) {
+            enableStderrRelay = false
             let result = await handleInput('heatmap')
-            let {heatmap} = JSON.parse(result.match(/#sabaki(.*)/)[1])
+            enableStderrRelay = true
 
+            let {heatmap} = JSON.parse(result.match(/#sabaki(.*)/)[1])
             json.heatmap = heatmap
         }
 
