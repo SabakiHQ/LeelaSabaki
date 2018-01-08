@@ -12,7 +12,7 @@ if (leelaArgIndex < 0 || globalArgs.includes('--help')) return console.log(`
     ${pkg.productName} v${pkg.version}
 
     USAGE:
-        ${pkg.name} [--flat] [--help] <path-to-leela> [leela-arguments...]
+        ${pkg.name} [--flat] [--heatmap] [--help] <path-to-leela> [leela-arguments...]
 
     OPTIONS:
         --flat
