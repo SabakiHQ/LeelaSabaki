@@ -12,8 +12,8 @@
 ## Installation
 
 - Make sure you have the engine only version of [Leela](https://www.sjeng.org/leela.html) or [Leela Zero](https://github.com/gcp/leela-zero).
-- Make sure you have [Sabaki v0.33.2](https://github.com/yishn/Sabaki/releases/tag/v0.33.2) installed.
-- [Download LeelaSabaki](https://github.com/yishn/LeelaSabaki/releases), or [build it yourself](#building). Make sure you have permission to execute the files.
+- Make sure you have [Sabaki v0.33.2](https://github.com/SabakiHQ/Sabaki/releases/tag/v0.33.2) installed.
+- [Download LeelaSabaki](https://github.com/SabakiHQ/LeelaSabaki/releases), or [build it yourself](#building). Make sure you have permission to execute the files.
 - Open Sabaki and open the 'Preferences' drawer by pressing <kbd>Ctrl/Cmd</kbd>+<kbd>,</kbd>.
 - Click on the 'Engines' tab and add a new engine with the following settings:
 	- **Path:** Your path to LeelaSabaki
@@ -46,7 +46,7 @@ $ leelasabaki [--flat] [--heatmap] [--help] <path-to-leela> [leela-arguments...]
 Make sure you have [Node.js](https://nodejs.org/) and npm installed. First, clone LeelaSabaki:
 
 ~~~
-$ git clone https://github.com/yishn/LeelaSabaki.git
+$ git clone https://github.com/SabakiHQ/LeelaSabaki.git
 $ cd LeelaSabaki
 ~~~
 
