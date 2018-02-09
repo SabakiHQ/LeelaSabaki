@@ -16,8 +16,11 @@
 - [Download LeelaSabaki](https://github.com/SabakiHQ/LeelaSabaki/releases), or [build it yourself](#building). Make sure you have permission to execute the files.
 - Open Sabaki and open the 'Preferences' drawer by pressing <kbd>Ctrl/Cmd</kbd>+<kbd>,</kbd>.
 - Click on the 'Engines' tab and add a new engine with the following settings:
-	- **Path:** Your path to LeelaSabaki
-	- **Arguments:** [LeelaSabaki options](#options), followed by your path to Leela (Zero), followed by additional command line arguments to Leela. Leela will be called with the `--gtp` option automatically. If you're using Leela Zero, make sure to configure it properly.
+  - **Path:** Your path to LeelaSabaki
+  - **Arguments:** [LeelaSabaki options](#options), followed by your path to Leela (Zero), followed by additional command line arguments to Leela. Leela will be called with the `--gtp` option automatically. If you're using Leela Zero, make sure to configure it properly.
+- **Example**
+  - **Path:** `leelasabaki`
+  - **Arguments:** `--heatmap my_path/leelaz -w my_path/weights.txt --playouts 100 --noponder`
 
 ## CLI Manual
 
