@@ -12,7 +12,7 @@
 ## Installation
 
 - Make sure you have the engine only version of [Leela](https://www.sjeng.org/leela.html) or [Leela Zero](https://github.com/gcp/leela-zero).
-- Make sure you have the most recent version of [Sabaki](https://github.com/SabakiHQ/Sabaki/releases/latest) installed.
+- Make sure you have the [most recent version of Sabaki](https://github.com/SabakiHQ/Sabaki/releases/latest) installed.
 - [Download LeelaSabaki](https://github.com/SabakiHQ/LeelaSabaki/releases), or [build it yourself](#building). Make sure you have permission to execute the files.
 - Open Sabaki and open the 'Preferences' drawer by pressing <kbd>Ctrl/Cmd</kbd>+<kbd>,</kbd>.
 - Click on the 'Engines' tab and add a new engine with the following settings:
