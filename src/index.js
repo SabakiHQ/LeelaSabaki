@@ -163,7 +163,7 @@ async function handleInput(input) {
         stderrLogger.stop()
         if (!response.error) state.genmoveColor = args[0][0].toUpperCase()
     } else if (name === 'list_commands') {
-        response.content += '\nsabaki-genmovelog'
+        if (!response.error) response.content += '\nsabaki-genmovelog'
     } else if (name === 'boardsize') {
         if (!response.error) state.size = +args[0]
     }
