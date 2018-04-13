@@ -36,8 +36,8 @@ let [leelaPath, ...leelaArgs] = [...process.argv.slice(leelaArgIndex)]
 if (!leelaArgs.includes('--gtp')) leelaArgs.push('--gtp')
 
 let controller = new Controller(leelaPath, leelaArgs)
-let enableStderrRelay = true
 let stderrLogger = new StderrLogger(controller)
+let enableStderrRelay = true
 
 let state = {
     size: 19,

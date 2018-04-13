@@ -23,10 +23,10 @@
     "url": "https://github.com/yishn/LeelaSabaki/issues"
   },
   "dependencies": {
-    "@sabaki/gtp": "^1.0.1"
+    "@sabaki/gtp": "^1.1.0"
   },
   "devDependencies": {
-    "pkg": "^4.3.0-beta.1"
+    "pkg": "^4.3.1"
   },
   "scripts": {
     "build": "pkg . --targets node8 --out-path ./bin",
