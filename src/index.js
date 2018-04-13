@@ -1,9 +1,9 @@
 const pkg = require('../package')
 const fs = require('fs')
 const readline = require('readline')
+const {Controller, Command, Response} = require('@sabaki/gtp')
 const {coord2point} = require('./sgf')
-const GTPEngine = require('./GTPEngine')
-const ReadableLogger = require('./ReadableLogger')
+const StderrLogger = require('./StderrLogger')
 
 let leelaArgIndex = process.argv.findIndex((x, i) => i >= 2 && x.indexOf('-') !== 0)
 let globalArgs = process.argv.slice(2, leelaArgIndex)
@@ -32,18 +32,21 @@ let lineReader = readline.createInterface({
     prompt: ''
 })
 
-let leelaArgs = [...process.argv.slice(leelaArgIndex), '--gtp']
-let engine = new GTPEngine(...leelaArgs)
+let [leelaPath, ...leelaArgs] = [...process.argv.slice(leelaArgIndex)]
+if (!leelaArgs.includes('--gtp')) leelaArgs.push('--gtp')
+
+let controller = new Controller(leelaPath, leelaArgs)
 let enableStderrRelay = true
-let stderrLogger = new ReadableLogger(engine.stderr)
+let stderrLogger = new StderrLogger(controller)
 
 let state = {
     size: 19,
     genmoveColor: 'B'
 }
 
-engine.process.on('exit', code => process.exit(code))
-engine.stderr.on('data', chunk => enableStderrRelay && process.stderr.write(chunk))
+controller.start()
+controller.process.on('exit', code => process.exit(code))
+controller.on('stderr', ({content}) => enableStderrRelay && process.stderr.write(content + '\n'))
 
 function log2variations(log) {
     let lines = log.split('\n')
@@ -52,7 +55,7 @@ function log2variations(log) {
     if (startIndex < 0) startIndex = lines.length
 
     let colors = [state.genmoveColor, state.genmoveColor === 'B' ? 'W' : 'B']
-    
+
     return lines
         .slice(startIndex)
         .filter(line => line.includes('->'))
@@ -109,10 +112,7 @@ function log2heatmap(log) {
 }
 
 async function handleInput(input) {
-    let command = engine.parseCommand(input)
-    if (command == null) return `? invalid command`
-
-    let {id, name, args} = command
+    let {id, name, args} = Command.fromString(input)
     if (id == null) id = ''
 
     if (['genmove', 'heatmap'].includes(name)) stderrLogger.start()
@@ -130,46 +130,45 @@ async function handleInput(input) {
             json.heatmap = heatmap
         }
 
-        return `=${id} #sabaki${JSON.stringify(json)}\n\n`        
+        return `=${id} #sabaki${JSON.stringify(json)}\n\n`
     } else if (name === 'known_command' && args[0] === 'sabaki-genmovelog') {
         return `=${id} true\n\n`
     } else if (name === 'heatmap') {
         await Promise.all([
             new Promise(resolve => {
                 let counter = state.size
-                let dataHandler = chunk => {
-                    if (chunk.match(/^\s*(\d+\s+)+$/) != null) {
+                let dataHandler = ({content}) => {
+                    if (content.match(/^\s*(\d+\s+)+$/) != null) {
                         counter--
                     }
 
                     if (counter === 0) {
-                        engine.stderr.removeListener('data', dataHandler)
+                        controller.removeListener('stderr', dataHandler)
                         resolve()
                     }
                 }
 
-                engine.stderr.on('data', dataHandler)
+                controller.on('stderr', dataHandler)
             }),
-            engine.sendCommand('heatmap')
+            controller.sendCommand({name: 'heatmap'})
         ])
 
         let heatmap = log2heatmap(stderrLogger.log)
         return `=${id} #sabaki${JSON.stringify({heatmap})}\n\n`
     }
 
-    let response = await engine.sendCommand(input)
-    let result = response.trim()
+    let response = await controller.sendCommand(Command.fromString(input))
 
     if (name === 'genmove') {
         stderrLogger.stop()
-        if (response[0] === '=') state.genmoveColor = args[0][0].toUpperCase()
+        if (!response.error) state.genmoveColor = args[0][0].toUpperCase()
     } else if (name === 'list_commands') {
-        result += '\nsabaki-genmovelog'
+        response.content += '\nsabaki-genmovelog'
     } else if (name === 'boardsize') {
-        if (response[0] === '=') state.size = +args[0]
+        if (!response.error) state.size = +args[0]
     }
 
-    return result + '\n\n'
+    return Response.toString(response) + '\n\n'
 }
 
 lineReader.on('line', async input => {

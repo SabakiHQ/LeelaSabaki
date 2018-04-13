@@ -22,7 +22,9 @@
   "bugs": {
     "url": "https://github.com/yishn/LeelaSabaki/issues"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@sabaki/gtp": "^1.0.1"
+  },
   "devDependencies": {
     "pkg": "^4.3.0-beta.1"
   },

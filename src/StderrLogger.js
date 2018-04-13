@@ -1,13 +1,13 @@
-module.exports = class ReadableLogger {
-    constructor(readable) {
+module.exports = class StderrLogger {
+    constructor(controller) {
         this._enabled = false
 
-        this.readable = readable
+        this.controller = controller
         this.log = ''
 
-        this.readable.on('data', chunk => {
+        controller.on('stderr', ({content}) => {
             if (!this._enabled) return
-            this.log += chunk.replace(/\r/g, '')
+            this.log += content.replace(/\r/g, '') + '\n'
         })
     }
 
