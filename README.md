@@ -66,3 +66,8 @@ $ npm run build
 ~~~
 
 This will create an executable file in `/bin`.
+
+## Related
+
+* [gtp](https://github.com/SabakiHQ/gtp) - A Node.js module for handling GTP engines.
+
