@@ -55,7 +55,7 @@ async function startEngine() {
                 if (error) return
 
                 if (end) out.end()
-                else out.write(firstLine ? line.replace(/^[?=]\s*(\d+)?\s*/, '') : '\n' + line)
+                else out.write(firstLine ? line.replace(/^[?=](\d+)?\s*/, '') : '\n' + line)
 
                 firstLine = false
             })
@@ -64,15 +64,12 @@ async function startEngine() {
         })
     }
 
-    engine.command('name', async (_, out) => {
-        let {content} = await controller.sendCommand({name: 'name'})
-        out.send(`${pkg.productName} (${content})`)
-    })
-
-    engine.command('version', async (_, out) => {
-        let {content} = await controller.sendCommand({name: 'version'})
-        out.send(`${pkg.version} (${content})`)
-    })
+    for (let name of ['name', 'version']) {
+        engine.command(name, async (command, out) => {
+            let {content} = await controller.sendCommand(command)
+            out.send(`${name === 'name' ? pkg.productName : pkg.version} (${content})`)
+        })
+    }
 
     // Hooks for state management
 
@@ -82,6 +79,12 @@ async function startEngine() {
                 state.size = +command.args[0]
             }
         }
+    })
+
+    // Stop ongoing commands if possible
+
+    engine.on('command-received', () => {
+        controller.process.stdin.write('# stop\n')
     })
 
     engine.start()
