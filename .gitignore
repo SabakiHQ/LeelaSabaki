@@ -1,4 +1,5 @@
 bin/
 node_modules/
-*.exe
+leelaz/
 log.txt
+*.exe
