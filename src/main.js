@@ -55,7 +55,7 @@ async function startEngine() {
                 if (error) return
 
                 if (end) out.end()
-                else out.write(firstLine ? line.replace(/^[?=](\d+)?\s*/, '') : '\n' + line)
+                else out.write(firstLine ? line.replace(/^[?=]\d*\s*/, '') : '\n' + line)
 
                 firstLine = false
             })
@@ -68,6 +68,54 @@ async function startEngine() {
         engine.command(name, async (command, out) => {
             let {content} = await controller.sendCommand(command)
             out.send(`${name === 'name' ? pkg.productName : pkg.version} (${content})`)
+        })
+    }
+
+    // Sabaki commands
+
+    for (let name of ['analyze', 'genmove_analyze']) {
+        engine.command(`sabaki-${name}`, async (command, out) => {
+            let firstLine = true
+            let error = false
+            let {args} = command
+            let lastMoves = null
+
+            let response = await controller.sendCommand({name: `lz-${name}`, args}, ({line, end}) => {
+                if (firstLine && line[0] === '?') error = true
+                if (error) return
+                if (end) return out.end()
+
+                if (line.slice(0, 5) === 'info ') {
+                    let moves = lastMoves = line
+                        .split(/\s*info\s+/).slice(1)
+                        .map(x => x.split(/\s+/))
+                        .map(x => [x.slice(0, 8), x.slice(9)])
+                        .map(([[_0, vertex, _1, visits, _2, win, _3, order], variation]) => ({
+                            order,
+                            vertex,
+                            visits: +visits,
+                            win: +win / 100,
+                            variation
+                        }))
+                        .sort((x, y) => x.order - y.order)
+
+                    line = '#sabaki' + JSON.stringify({
+                        moves: moves.map(({move, visits, win}) => ({move, visits, win}))
+                    })
+                } else if (line.slice(0, 5) === 'play ') {
+                    line = [
+                        line,
+                        '#sabaki' + JSON.stringify({
+                            variations: lastMoves.map(({visits, win, variation}) => ({visits, win, variation}))
+                        })
+                    ].join('\n')
+                }
+
+                out.write(firstLine ? line.replace(/^[?=]\d*\s*/, '') : '\n' + line)
+                firstLine = false
+            })
+
+            if (error) out.err(response.content)
         })
     }
 
@@ -84,7 +132,7 @@ async function startEngine() {
     // Stop ongoing commands if possible
 
     engine.on('command-received', () => {
-        controller.process.stdin.write('# stop\n')
+        controller.process.stdin.write('\n')
     })
 
     engine.start()
