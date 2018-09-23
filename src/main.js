@@ -56,6 +56,19 @@ async function startEngine() {
 
     // Sabaki commands
 
+    let parseInfoLine = line => line
+        .split(/\s*info\s+/).slice(1)
+        .map(x => x.split(/\s+/))
+        .map(x => [x.slice(0, 8), x.slice(9)])
+        .map(([[, vertex, , visits, , win, , order], variation]) => ({
+            order,
+            vertex,
+            visits: +visits,
+            win: +win / 100,
+            variation
+        }))
+        .sort((x, y) => x.order - y.order)
+
     for (let name of ['analyze', 'genmove_analyze']) {
         engine.command(`sabaki-${name}`, async (command, out) => {
             let firstLine = true
@@ -69,29 +82,15 @@ async function startEngine() {
                 if (end) return out.end()
 
                 if (line.slice(0, 5) === 'info ') {
-                    let moves = lastMoves = line
-                        .split(/\s*info\s+/).slice(1)
-                        .map(x => x.split(/\s+/))
-                        .map(x => [x.slice(0, 8), x.slice(9)])
-                        .map(([[, vertex, , visits, , win, , order], variation]) => ({
-                            order,
-                            vertex,
-                            visits: +visits,
-                            win: +win / 100,
-                            variation
-                        }))
-                        .sort((x, y) => x.order - y.order)
+                    let moves = lastMoves = parseInfoLine(line)
 
                     line = '#' + JSON.stringify({
                         moves: moves.map(({vertex, visits, win}) => ({vertex, visits, win}))
                     })
                 } else if (line.slice(0, 5) === 'play ') {
-                    line = [
-                        line,
-                        '#' + JSON.stringify({
-                            variations: lastMoves.map(({visits, win, variation}) => ({visits, win, variation}))
-                        })
-                    ].join('\n')
+                    line += '\n#' + JSON.stringify({
+                        variations: lastMoves.map(({visits, win, variation}) => ({visits, win, variation}))
+                    })
 
                     // Continue pondering
 
