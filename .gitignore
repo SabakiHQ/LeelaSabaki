@@ -1,5 +1,6 @@
 bin/
 node_modules/
 leelaz/
+leelaz_opencl_tuning
 log.txt
 *.exe
