@@ -1,43 +1,26 @@
 const pkg = require('../package')
 const {Engine, Controller, Command, Response} = require('@sabaki/gtp')
-const {coord2point} = require('./sgf')
 
-let leelaArgIndex = process.argv.findIndex((x, i) => i >= 2 && x.indexOf('-') !== 0)
-let globalArgs = process.argv.slice(2, leelaArgIndex)
+let leelaPath = process.argv[2]
+let leelaArgs = process.argv.slice(3)
 
-let state = {
-    size: 19,
-    genmoveColor: 'B'
-}
-
-if (leelaArgIndex < 0 || globalArgs.includes('--help')) return console.log(`
+if (leelaPath == null) return console.log(`
     ${pkg.productName} v${pkg.version}
 
     USAGE:
-        ${pkg.name} [--flat] [--heatmap] [--help] <path-to-leela> [leela-arguments...]
-
-    OPTIONS:
-        --flat
-            Instead of appending variations as multiple moves, we will append one
-            node per variation with the final board arrangement and move numbers.
-
-        --heatmap
-            Visualizes network probabilities as a heatmap.
-
-        --help
-            Shows this help message.
+        ${pkg.name} <path-to-leela> [leela-arguments...]
 `)
 
 async function startEngine() {
-    let [leelaPath, ...leelaArgs] = [...process.argv.slice(leelaArgIndex)]
     if (!leelaArgs.includes('--gtp') && !leelaArgs.includes('-g')) leelaArgs.push('--gtp')
 
     let engine = new Engine(pkg.productName, pkg.version)
     let controller = new Controller(leelaPath, leelaArgs)
+    let relayStderr = true
 
     controller.start()
     controller.process.on('exit', code => process.exit(code))
-    controller.on('stderr', ({content}) => process.stderr.write(content + '\n'))
+    controller.on('stderr', ({content}) => relayStderr && process.stderr.write(content + '\n'))
 
     // Inherit commands from Leela
 
@@ -77,10 +60,10 @@ async function startEngine() {
         engine.command(`sabaki-${name}`, async (command, out) => {
             let firstLine = true
             let error = false
-            let {args} = command
+            let leelaCommand = {name: `lz-${name}`, args: command.args}
             let lastMoves = null
 
-            let response = await controller.sendCommand({name: `lz-${name}`, args}, ({line, end}) => {
+            let response = await controller.sendCommand(leelaCommand, async ({line, end}) => {
                 if (firstLine && line[0] === '?') error = true
                 if (error) return
                 if (end) return out.end()
@@ -90,7 +73,7 @@ async function startEngine() {
                         .split(/\s*info\s+/).slice(1)
                         .map(x => x.split(/\s+/))
                         .map(x => [x.slice(0, 8), x.slice(9)])
-                        .map(([[_0, vertex, _1, visits, _2, win, _3, order], variation]) => ({
+                        .map(([[, vertex, , visits, , win, , order], variation]) => ({
                             order,
                             vertex,
                             visits: +visits,
@@ -99,16 +82,22 @@ async function startEngine() {
                         }))
                         .sort((x, y) => x.order - y.order)
 
-                    line = '#sabaki' + JSON.stringify({
-                        moves: moves.map(({move, visits, win}) => ({move, visits, win}))
+                    line = '#' + JSON.stringify({
+                        moves: moves.map(({vertex, visits, win}) => ({vertex, visits, win}))
                     })
                 } else if (line.slice(0, 5) === 'play ') {
                     line = [
                         line,
-                        '#sabaki' + JSON.stringify({
+                        '#' + JSON.stringify({
                             variations: lastMoves.map(({visits, win, variation}) => ({visits, win, variation}))
                         })
                     ].join('\n')
+
+                    // Continue pondering
+
+                    if (!leelaArgs.includes('--noponder')) {
+                        controller.sendCommand({name: 'lz-analyze', args: [10000]})
+                    }
                 }
 
                 out.write(firstLine ? line.replace(/^[?=]\d*\s*/, '') : '\n' + line)
@@ -118,16 +107,6 @@ async function startEngine() {
             if (error) out.err(response.content)
         })
     }
-
-    // Hooks for state management
-
-    engine.on('command-processed', (command, response) => {
-        if (command.name === 'boardsize') {
-            if (!response.error && command.args.length > 0) {
-                state.size = +command.args[0]
-            }
-        }
-    })
 
     // Stop ongoing commands if possible
 
